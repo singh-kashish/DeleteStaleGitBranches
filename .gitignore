@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.env.local
+# GitHub OAuth App credentials — do NOT commit this file.
+GITHUB_CLIENT_ID=your_client_id
+GITHUB_CLIENT_SECRET=your_client_secret
+
+# NextAuth settings
+NEXTAUTH_SECRET=replace_with_strong_random_string
+NEXTAUTH_URL=http://localhost:3000
+
+# OAuth scopes: prefer public_repo when you only need public repos.
+GITHUB_SCOPE=repo
+
+# MCP service base URL (server-side). This should be reachable from the Next.js server only.
+# If you host MCP separately, ensure network ACLs restrict access.
+MCP_BASE_URL=http://localhost:4000
