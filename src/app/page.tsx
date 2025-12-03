@@ -10,8 +10,12 @@ export default function Page() {
   if (!session) {
     return (<>
       <Header/>
-        <p className="text-black">Not signed in</p>
-        <button onClick={() => signIn("github")}>Sign in with Github</button>
+        <main className="flex mt-4 rounded-full border-gray-400 border-dashed m-10 p-10">
+          <p className="text-black">Not signed in</p>
+          <button onClick={() => signIn("github")}>
+          Sign in with Github</button>
+          </main>
+        
     </>);
   }
 

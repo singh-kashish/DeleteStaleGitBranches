@@ -10,7 +10,7 @@ export default function Header() {
   const { data: session } = useSession();
 
   return (
-    <header className="flex flex-row justify-between items-center px-6 py-4 mx-6">
+    <header className="flex flex-row justify-between items-center p-6 m-10 border-b-2 border-gray-500">
       <div className="flex items-center gap-4">
         <Image src={favicon} alt="Logo" width={48} height={48} className="rounded-full pr-2" />
         <h1 className="text-2xl font-bold">GitHub Delete Stale Branches</h1>

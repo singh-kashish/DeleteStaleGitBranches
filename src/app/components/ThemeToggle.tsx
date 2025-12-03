@@ -17,7 +17,7 @@ export function ThemeToggle() {
       <button
         onClick={() => setTheme(theme === "light" ? "dark" : "light")}
         aria-label="Toggle theme"
-        className="rounded-full p-3 hover:bg-lime-800 transition"
+        className="rounded-full p-3 hover:bg-lime-800 transition cursor-pointer"
       >
         {theme === "light" ? <Moon /> : <Sun />}
       </button>
@@ -26,7 +26,7 @@ export function ThemeToggle() {
       <button
         onClick={() => setTheme("system")}
         aria-label="Use system theme"
-        className="rounded-full p-3 hover:bg-lime-800 transition"
+        className="rounded-full p-3 hover:bg-lime-800 transition cursor-pointer"
       >
         <Laptop />
       </button>
