@@ -12,7 +12,7 @@ export default function Page() {
     return (
       <>
         <Header />
-        <main className="flex flex-col m-10 p-10 border-2 border-dashed border-gray-400 rounded-2xl items-center gap-4">
+        <main className="flex flex-col m-4 p-2 border-2 border-dashed border-gray-400 rounded-2xl items-center gap-4 h-full">
           <p className="text-xl font-medium">Not signed in</p>
          <button
           type="button"
@@ -29,7 +29,7 @@ export default function Page() {
   return (
     <>
       <Header />
-      <main className="p-10">
+      <main className="flex flex-col m-4 p-2 border-2 border-dashed border-gray-400 rounded-2xl items-center gap-4 h-full">
         <p className="text-xl font-medium mb-6">Signed in as {session.user?.email}</p>
         <button
           onClick={() => signOut()}
