@@ -26,12 +26,12 @@ export default function Page() {
       </>
     );
   }
-
+  console.log(session.user);
   return (
     <>
       <Header />
       <main className="flex flex-col m-4 p-2 border-2 border-dashed border-gray-400 rounded-2xl items-center gap-4 h-full">
-        <p className="text-xl font-medium mb-6">Signed in as {session.user?.email}</p>
+        <p className="text-xl font-medium mb-6">Signed in as {session.user?.name}</p>
         <RepoList/>
         <button
           onClick={() => signOut()}

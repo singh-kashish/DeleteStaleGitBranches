@@ -1,24 +1,31 @@
-import { NextAuthOptions } from "next-auth";
-import GitHub from "next-auth/providers/github";
+import GitHubProvider from "next-auth/providers/github";
+import type { NextAuthOptions } from "next-auth";
 
-export const authConfig: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
-    GitHub({
+    GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
+      authorization: {
+        params: {
+          scope: "repo delete_repo workflow"
+        }
+      }
+    })
   ],
+  session: {
+    strategy: "jwt"
+  },
   callbacks: {
     async jwt({ token, account }) {
-      if (account) {
+      if (account?.access_token) {
         token.accessToken = account.access_token;
       }
       return token;
     },
     async session({ session, token }) {
-      (session as any).accessToken = (token as any).accessToken;
+      session.accessToken = token.accessToken;
       return session;
-    },
-  },
-  secret: process.env.NEXTAUTH_SECRET,
+    }
+  }
 };
