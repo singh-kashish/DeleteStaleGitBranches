@@ -15,8 +15,8 @@ export default function Page() {
     return (
       <>
         <Header />
-        <main className="flex flex-col m-4 p-2 bg-[#151B23] border-2 border-dashed border-gray-400 rounded-2xl items-center gap-4 min-h-full">
-          <P style="text-xl font-medium" text="Not signed in"/><p className="text-xl font-medium">Not signed in</p>
+        <main className="flex flex-col m-4 p-2 dark:bg-[#151B23] border-2 border-solid border-gray-400 rounded-2xl items-center gap-4 min-h-full">
+          <P style="text-xl font-medium" text="Not signed in"/>
          <button
           type="button"
           onClick={() => signIn("github")}
