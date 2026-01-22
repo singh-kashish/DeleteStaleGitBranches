@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface Repo {
   id: number;
@@ -37,11 +38,11 @@ export default function RepoList() {
   if (error) return <p className="p-4 text-red-500">{error}</p>;
 
   return (
-    <div className="p-4 space-y-3">
+    <div className=" space-y-3 w-[65%] bg-[#0C1117] rounded-lg flex flex-col justify-start items-start">
       <h2 className="text-xl font-semibold">Your Repositories</h2>
       {repos.map(repo => (
-        <div key={repo.id} className="p-3 border rounded">
-          {repo.name}
+        <div key={repo.id} className="p-3 w-[98%] flex items-end border rounded hover:bg-[#0C1117}">
+          <Image src="../../folder.svg" alt="folder" width={40} height={40} /><p className="mb-1 text-lg ">{repo.name}</p>
         </div>
       ))}
     </div>
