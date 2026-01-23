@@ -1,8 +1,9 @@
-type PProps = {
+export function P({
+  text,
+  style,
+}: {
   text: string;
   style: string;
-};
-
-export function P({ text, style }: PProps) {
+}) {
   return <p className={style}>{text}</p>;
 }

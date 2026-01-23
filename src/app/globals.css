@@ -1,27 +1,35 @@
-/* src/app/globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    /* Page background */
     --color-background: #ffffff;
+
+    /* Surfaces / cards / panels */
+    --color-muted: #f7f8fa;
+
+    /* Text */
     --color-text: #111111;
+
+    /* Primary action */
     --color-primary: #0b5fff;
-    --color-muted: #666666;
-    --color-border: #dddddd;
+
+    /* Borders */
+    --color-border: #d1d9e0;
   }
 
   .dark {
     --color-background: #0b0b0f;
+    --color-muted: #151b23;
     --color-text: #eaeaea;
     --color-primary: #64a1ff;
-    --color-muted: #a3a3a3;
     --color-border: #2a2a33;
   }
 
   body {
-    background: var(--color-background);
+    background-color: var(--color-background);
     color: var(--color-text);
   }
 }
