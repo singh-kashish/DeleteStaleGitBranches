@@ -17,9 +17,9 @@ export default function RepoList() {
   useEffect(() => {
     const loadRepos = async () => {
       try {
-        const res = await fetch("/api/github/repos");
+        const res = await fetch("/api/github/repos/");
         const data = await res.json();
-
+        console.log('git>',data);
         if (!res.ok) throw new Error(data.error || "Failed to fetch repos");
         setRepos(data);
       } catch (err) {
