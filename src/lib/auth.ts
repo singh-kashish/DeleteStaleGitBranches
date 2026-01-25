@@ -8,24 +8,21 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope: "repo delete_repo workflow"
-        }
-      }
-    })
+          scope: "repo delete_repo",
+        },
+      },
+    }),
   ],
-  session: {
-    strategy: "jwt"
-  },
   callbacks: {
     async jwt({ token, account }) {
-      if (account?.access_token) {
+      if (account) {
         token.accessToken = account.access_token;
       }
       return token;
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken;
+      (session as any).accessToken = token.accessToken;
       return session;
-    }
-  }
+    },
+  },
 };
