@@ -16,10 +16,20 @@ export interface GitHubBranch {
   daysStale: number;
   protected: boolean;
 }
-
-export interface RepoWithBranches {
-  repo: GitHubRepo;
-  branches: GitHubBranch[];
+interface Branch {
+  name: string;
+  lastCommitDate: string;
+  staleDays: number;
+  isDefault: boolean;
+}
+interface RepoWithBranches {
+  repo: {
+    id: number;
+    name: string;
+    owner: string; // STRING
+    defaultBranch: string;
+  };
+  branches: Branch[];
 }
 
 /**

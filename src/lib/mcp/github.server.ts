@@ -1,5 +1,5 @@
 import { GitHubMcpClient } from "./github.client";
-import { HttpMcpTransport } from "./mcp.transport";
+
 
 /**
  * Server-only factory for GitHub MCP client

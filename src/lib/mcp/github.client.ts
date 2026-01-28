@@ -1,86 +1,79 @@
-import {
-  GitHubRepo,
-  RepoWithBranches,
-  DeleteBranchesInput,
-  DeleteBranchesResult,
-} from "./github.types";
-import {
-  UnauthorizedError,
-  UnknownGitHubError,
-} from "./github.errors";
+import { Octokit } from "@octokit/rest";
+import { RepoWithBranches } from "./types";
+import { UnauthorizedError } from "./github.errors";
 
-/**
- * MCP transport abstraction
- * (keeps this testable & replaceable)
- */
-interface McpTransport {
-  call<T>(tool: string, args: unknown): Promise<T>;
-}
-
-/**
- * GitHub MCP Client
- */
 export class GitHubMcpClient {
-  private token: string;
-  private transport: McpTransport;
+  private octokit: Octokit;
 
-  constructor(params: { token: string; transport: McpTransport }) {
+  constructor(params: { token: string }) {
     if (!params.token) {
       throw new UnauthorizedError();
     }
-    this.token = params.token;
-    this.transport = params.transport;
+
+    this.octokit = new Octokit({
+      auth: params.token,
+    });
   }
 
-  /**
-   * Fetch repositories (no branches)
-   */
-  async listRepos(): Promise<GitHubRepo[]> {
-    try {
-      return await this.transport.call<GitHubRepo[]>(
-        "github.listRepos",
-        { token: this.token }
-      );
-    } catch (err) {
-      throw this.normalizeError(err);
-    }
-  }
-
-  /**
-   * Fetch repos with branches & staleness
-   */
   async listReposWithBranches(): Promise<RepoWithBranches[]> {
-    try {
-      return await this.transport.call<RepoWithBranches[]>(
-        "github.listReposWithBranches",
-        { token: this.token }
-      );
-    } catch (err) {
-      throw this.normalizeError(err);
-    }
-  }
+    const { data: repos } =
+      await this.octokit.repos.listForAuthenticatedUser({
+        per_page: 100,
+        sort: "updated",
+      });
 
-  /**
-   * Delete branches (supports dry run)
-   */
-  async deleteBranches(
-    input: DeleteBranchesInput
-  ): Promise<DeleteBranchesResult> {
-    try {
-      return await this.transport.call<DeleteBranchesResult>(
-        "github.deleteBranches",
-        {
-          token: this.token,
-          ...input,
-        }
-      );
-    } catch (err) {
-      throw this.normalizeError(err);
-    }
-  }
+    const result: RepoWithBranches[] = [];
 
-  private normalizeError(error: unknown): Error {
-    if (error instanceof Error) return error;
-    return new UnknownGitHubError();
+    for (const repo of repos) {
+      const { data: branches } =
+        await this.octokit.repos.listBranches({
+          owner: repo.owner.login,
+          repo: repo.name,
+          per_page: 100,
+        });
+
+      const branchData = await Promise.all(
+        branches.map(async (branch) => {
+          const commit = await this.octokit.repos.getCommit({
+            owner: repo.owner.login,
+            repo: repo.name,
+            ref: branch.name,
+          });
+
+          const lastCommitDate =
+            commit.data.commit.committer?.date ??
+            commit.data.commit.author?.date ??
+            new Date().toISOString();
+
+          const staleDays = Math.floor(
+            (Date.now() - new Date(lastCommitDate).getTime()) /
+              (1000 * 60 * 60 * 24)
+          );
+
+          return {
+            name: branch.name,
+            repo: repo.name,
+            lastCommitSha: commit.data.sha,
+            lastCommitDate,
+            isDefault: branch.name === repo.default_branch,
+            staleDays,
+          };
+        })
+      );
+
+      branchData.sort((a, b) => b.staleDays - a.staleDays);
+
+      result.push({
+        repo: {
+          id: repo.id,
+          name: repo.name,
+          owner: repo.owner.login,
+          defaultBranch: repo.default_branch,
+        },
+        branches: branchData,
+      });
+    }
+
+    return result;
   }
 }

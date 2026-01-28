@@ -1,40 +1,33 @@
-/**
- * MCP Transport Layer
- * Safe-by-default implementation
- */
+export type MCPCallPayload = {
+  tool: string;
+  input: Record<string, any>;
+};
 
-const MCP_BASE_URL = process.env.MCP_SERVER_URL;
+export async function callMCP(
+  payload: MCPCallPayload
+): Promise<any> {
+  const url = process.env.MCP_SERVER_URL;
 
-/**
- * Call an MCP tool
- * Falls back gracefully if MCP is not configured
- */
-export async function callMCP<TInput, TOutput>(
-  tool: string,
-  input: TInput
-): Promise<TOutput> {
-  if (!MCP_BASE_URL) {
+  if (!url) {
     throw new Error(
       "MCP_SERVER_URL is not configured. MCP is not active yet."
     );
   }
 
-  const url = `${MCP_BASE_URL}/call`;
-
-  const res = await fetch(url, {
+  const res = await fetch(`${url}/call`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      tool,
-      input,
-    }),
+    body: JSON.stringify(payload),
+    cache: "no-store",
   });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`MCP call failed: ${text}`);
+    throw new Error(
+      `MCP call failed (${res.status}): ${text}`
+    );
   }
 
   return res.json();
