@@ -73,7 +73,17 @@ export default function RepoList() {
   /* ---------------- Render guards ---------------- */
 
   if (loading) {
-    return <p className="p-4 text-muted">Loading repositories…</p>;
+    return (
+      <div className="w-full max-w-5xl bg-muted border border-border rounded-xl overflow-hidden p-8">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-lg font-medium text-text">Loading repositories…</p>
+          <p className="text-sm text-muted-foreground">
+            Fetching repos and branches from GitHub
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
@@ -175,7 +185,7 @@ export default function RepoList() {
 
                       <td className="p-3 text-sm flex items-center gap-2 justify-start">
                         <Image
-                          src="/Git-Branch.svg"
+                          src="/branch.png"
                           alt="branch"
                           width={16}
                           height={16}

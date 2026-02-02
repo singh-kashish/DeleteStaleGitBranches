@@ -1,34 +1,56 @@
-export type MCPCallPayload = {
+/**
+ * MCP Transport Layer
+ * Domain-friendly adapter over MCP protocol
+ */
+
+const MCP_BASE_URL = process.env.MCP_SERVER_URL;
+
+/* ---------------- Types ---------------- */
+
+export interface MCPCallPayload {
   tool: string;
-  input: Record<string, any>;
-};
+  input: unknown;
+}
 
-export async function callMCP(
-  payload: MCPCallPayload
-): Promise<any> {
-  const url = process.env.MCP_SERVER_URL;
+/**
+ * Transport contract used by MCP clients
+ */
+export interface McpTransport {
+  call<T = unknown>(
+    tool: string,
+    payload: Record<string, unknown>
+  ): Promise<T>;
+}
 
-  if (!url) {
-    throw new Error(
-      "MCP_SERVER_URL is not configured. MCP is not active yet."
-    );
+
+/* ---------------- Low-level protocol call ---------------- */
+
+async function rawCallMCP<T>(payload: MCPCallPayload): Promise<T> {
+  if (!MCP_BASE_URL) {
+    throw new Error("MCP_SERVER_URL is not configured");
   }
-
-  const res = await fetch(`${url}/call`, {
+  console.log('K>',MCP_BASE_URL);
+  const res = await fetch(`${MCP_BASE_URL}/call`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-    cache: "no-store",
   });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(
-      `MCP call failed (${res.status}): ${text}`
-    );
+    throw new Error(`MCP call failed: ${text}`);
   }
 
   return res.json();
 }
+
+/* ---------------- Default transport ---------------- */
+
+export const httpMcpTransport: McpTransport = {
+  call<T>(tool: string, args: unknown) {
+    return rawCallMCP<T>({
+      tool,
+      input: args,
+    });
+  },
+};

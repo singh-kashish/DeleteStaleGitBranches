@@ -1,67 +1,7 @@
-import { Octokit } from "@octokit/rest";
-import { MCPRepo, MCPBranch, RepoWithBranches } from "../types";
+import { listReposWithBranches } from "./tools/github.listReposWithBranches";
+import { deleteBranches } from "./tools/github.deleteBranches";
 
-const octokit = new Octokit({
-  auth: process.env.GITHUB_TOKEN,
-});
-
-export async function listReposWithBranches(): Promise<RepoWithBranches[]> {
-  const { data: repos } = await octokit.repos.listForAuthenticatedUser({
-    per_page: 100,
-    sort: "updated",
-  });
-
-  const result: RepoWithBranches[] = [];
-
-  for (const repo of repos) {
-    const { data: branches } = await octokit.repos.listBranches({
-      owner: repo.owner.login,
-      repo: repo.name,
-      per_page: 100,
-    });
-
-    const branchData: MCPBranch[] = await Promise.all(
-      branches.map(async (branch) => {
-        const commit = await octokit.repos.getCommit({
-          owner: repo.owner.login,
-          repo: repo.name,
-          ref: branch.name,
-        });
-
-        const lastCommitDate =
-          commit.data.commit.committer?.date ??
-          commit.data.commit.author?.date ??
-          new Date().toISOString();
-
-        const staleDays = Math.floor(
-          (Date.now() - new Date(lastCommitDate).getTime()) /
-            (1000 * 60 * 60 * 24)
-        );
-
-        return {
-          name: branch.name,
-          repo: repo.name,
-          lastCommitSha: commit.data.sha,
-          lastCommitDate,
-          isDefault: branch.name === repo.default_branch,
-          staleDays,
-        };
-      })
-    );
-
-    // sort branches: MOST stale first
-    branchData.sort((a, b) => b.staleDays - a.staleDays);
-
-    result.push({
-      repo: {
-        id: repo.id,
-        name: repo.name,
-        owner: repo.owner.login,
-        defaultBranch: repo.default_branch,
-      },
-      branches: branchData,
-    });
-  }
-
-  return result;
-}
+export const githubTools = {
+  "github.listReposWithBranches": listReposWithBranches,
+  "github.deleteBranches": deleteBranches,
+};

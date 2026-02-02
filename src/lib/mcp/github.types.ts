@@ -1,74 +1,50 @@
-// Domain-level types (NOT GitHub API types)
+  // Domain-level types (NOT GitHub API types)
 
-export interface GitHubRepo {
-  id: number;
-  name: string;
-  fullName: string;
-  private: boolean;
-  defaultBranch: string;
-  updatedAt: string;
-}
+  export interface GitHubRepo {
+    id: number;
+    name: string;
+    fullName: string;
+    private: boolean;
+    defaultBranch: string;
+    updatedAt: string;
+  }
 
-export interface GitHubBranch {
-  name: string;
-  repo: string;
-  lastCommitAt: string;
-  daysStale: number;
-  protected: boolean;
-}
-interface Branch {
+  export interface GitHubBranch {
+    name: string;
+    repo: string;
+    lastCommitAt: string;
+    daysStale: number;
+    protected: boolean;
+  }
+/* ---------------- Branch ---------------- */
+
+export interface Branch {
   name: string;
   lastCommitDate: string;
   staleDays: number;
   isDefault: boolean;
 }
-interface RepoWithBranches {
-  repo: {
-    id: number;
-    name: string;
-    owner: string; // STRING
-    defaultBranch: string;
-  };
-  branches: Branch[];
+
+/* ---------------- Repo + Branches ---------------- */
+
+export interface RepoWithBranches {
+  owner: string;
+  repo: string;
+  branches: string[];
 }
 
-/**
- * Delete request payload
- */
-export interface DeleteBranchesInput {
-  branches: {
-    repo: string;
-    branch: string;
-  }[];
-  dryRun: boolean;
-}
-
-/**
- * Delete response payload
- */
-export interface DeleteBranchesResult {
-  success: {
-    repo: string;
-    branch: string;
-  }[];
-  failed: {
-    repo: string;
-    branch: string;
-    reason: string;
-  }[];
-}
-export type DeleteBranchesRequest = {
-  dryRun: boolean;
-  items: {
-    owner: string;
-    repo: string;
-    branch: string;
-  }[];
-};
-
-export type DeleteBranchResult = {
+export interface DeleteBranchTarget {
+  owner: string;
   repo: string;
   branch: string;
-  status: "would-delete" | "deleted" | "skipped";
-  reason?: "protected" | "default-branch" | "not-found";
-};
+}
+
+export interface DeleteBranchesInput {
+  dryRun: boolean;
+  branches: DeleteBranchTarget[];
+}
+
+export interface DeleteBranchesResult {
+  deleted: DeleteBranchTarget[];
+  skipped: DeleteBranchTarget[];
+}
