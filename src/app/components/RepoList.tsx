@@ -95,7 +95,7 @@ export default function RepoList() {
   return (
     <div className="w-full max-w-5xl bg-muted border border-border rounded-xl overflow-hidden">
       <table className="w-full border-collapse">
-        <thead className="bg-background border-b border-border">
+        <thead className="bg-muted/30 border-b border-border">
           <tr className="text-left text-sm text-text/70">
             <th className="p-3 w-10">Select</th>
             <th className="p-3 w-10"></th>
@@ -161,7 +161,7 @@ export default function RepoList() {
                         toggleBranch(repo.id, branch.name)
                       }
                       className={[
-                        "bg-muted/30 border-b border-border",
+                        "bg-background border-b border-border",
                         "cursor-pointer hover:bg-muted/60",
                         isSelected
                           ? "ring-2 ring-inset ring-primary"
