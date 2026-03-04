@@ -39,12 +39,23 @@ export interface DeleteBranchTarget {
   branch: string;
 }
 
-export interface DeleteBranchesInput {
-  dryRun: boolean;
-  branches: DeleteBranchTarget[];
-}
 
-export interface DeleteBranchesResult {
-  deleted: DeleteBranchTarget[];
-  skipped: DeleteBranchTarget[];
-}
+export type DeleteBranchesInput = {
+  dryRun: boolean;
+  branches: {
+    owner: string;
+    repo: string;
+    branch: string;
+  }[];
+};
+
+export type DeleteBranchesResult = {
+  dryRun: boolean;
+  results: {
+    owner: string;
+    repo: string;
+    branch: string;
+    status: "dry-run" | "deleted" | "failed";
+    error?: string;
+  }[];
+};

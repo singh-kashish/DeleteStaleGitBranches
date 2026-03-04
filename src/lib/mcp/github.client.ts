@@ -20,15 +20,14 @@ export class GitHubMcpClient {
     );
   }
 
-  async deleteBranches(
-    input: DeleteBranchesInput
-  ): Promise<DeleteBranchesResult> {
-    return this.transport.call<DeleteBranchesResult>(
-      "github.deleteBranches",
-      {
-        token: this.token,
-        input,
-      }
-    );
-  }
+  async deleteBranches(input: DeleteBranchesInput) {
+  return this.transport.call<DeleteBranchesResult>(
+    "github.deleteBranches",
+    {
+      token: this.token,
+      input,
+    }
+  );
+}
+
 }

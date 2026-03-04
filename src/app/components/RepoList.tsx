@@ -14,7 +14,11 @@ export default function RepoList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /* ---------------- Fetch repos (WITH branches) ---------------- */
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteSuccessCount, setDeleteSuccessCount] = useState<number | null>(null);
+
+  /* ---------------- Fetch repos ---------------- */
 
   useEffect(() => {
     const loadRepos = async () => {
@@ -28,7 +32,6 @@ export default function RepoList() {
 
         setRepos(data);
 
-        // initialize selection map
         const initialSelection: Record<number, Set<string>> = {};
         data.forEach((r: RepoWithBranches) => {
           initialSelection[r.repo.id] = new Set();
@@ -53,9 +56,7 @@ export default function RepoList() {
 
       return {
         ...prev,
-        [repoId]: allSelected
-          ? new Set()
-          : new Set(branchNames),
+        [repoId]: allSelected ? new Set() : new Set(branchNames),
       };
     });
   };
@@ -63,25 +64,99 @@ export default function RepoList() {
   const toggleBranch = (repoId: number, branchName: string) => {
     setSelectedBranches((prev) => {
       const next = new Set(prev[repoId]);
-      next.has(branchName)
-        ? next.delete(branchName)
-        : next.add(branchName);
+      next.has(branchName) ? next.delete(branchName) : next.add(branchName);
       return { ...prev, [repoId]: next };
     });
   };
+
+  /* ---------------- Delete logic ---------------- */
+
+  const selectedForDelete = repos.flatMap(({ repo, branches }) =>
+  branches
+    .filter(
+      (b) =>
+        !b.isDefault &&
+        selectedBranches[repo.id]?.has(b.name)
+    )
+    .map((b) => ({
+      owner: repo.owner,
+      repo: repo.name,
+      branch: b.name,
+      repoId: repo.id,
+    }))
+);
+
+
+  const handleDeleteConfirmed = async () => {
+  setDeleting(true);
+
+  const previous = repos;
+  const count = selectedForDelete.length;
+
+  // Optimistic UI
+  setRepos((current) =>
+    current.map((r) => ({
+      ...r,
+      branches: r.branches.filter(
+        (b) => !selectedBranches[r.repo.id]?.has(b.name)
+      ),
+    }))
+  );
+
+  try {
+    const res = await fetch("/api/github/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        dryRun: false,
+        branches: selectedForDelete.map(
+          ({ owner, repo, branch }) => ({
+            owner,
+            repo,
+            branch,
+          })
+        ),
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Delete failed");
+    }
+
+    // Clear selection
+    setSelectedBranches((prev) => {
+      const next = { ...prev };
+      selectedForDelete.forEach((b) => {
+        next[b.repoId]?.delete(b.branch);
+      });
+      return next;
+    });
+
+    // 🔥 Show success state in modal
+    setDeleteSuccessCount(count);
+
+    // Auto close after 2 seconds
+    setTimeout(() => {
+      setShowConfirm(false);
+      setDeleteSuccessCount(null);
+    }, 2000);
+
+  } catch (err) {
+    // Rollback
+    setRepos(previous);
+    setShowConfirm(false);
+    alert("Delete failed. Changes reverted.");
+  } finally {
+    setDeleting(false);
+  }
+};
 
   /* ---------------- Render guards ---------------- */
 
   if (loading) {
     return (
-      <div className="w-full max-w-5xl bg-muted border border-border rounded-xl overflow-hidden p-8">
-        <div className="flex flex-col items-center justify-center gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <p className="text-lg font-medium text-text">Loading repositories…</p>
-          <p className="text-sm text-muted-foreground">
-            Fetching repos and branches from GitHub
-          </p>
-        </div>
+      <div className="p-8 text-center">
+        Loading repositories…
       </div>
     );
   }
@@ -93,124 +168,171 @@ export default function RepoList() {
   /* ---------------- UI ---------------- */
 
   return (
-    <div className="w-full max-w-5xl bg-muted border border-border rounded-xl overflow-hidden">
-      <table className="w-full border-collapse">
-        <thead className="bg-muted/30 border-b border-border">
-          <tr className="text-left text-sm text-text/70">
-            <th className="p-3 w-10">Select</th>
-            <th className="p-3 w-10"></th>
-            <th className="p-3 font-medium">Repository / Branch</th>
-            <th className="p-3 font-medium text-right">Last Commit</th>
-          </tr>
-        </thead>
+  <div className="w-full mx-auto bg-muted border border-border rounded-xl overflow-hidden relative">
 
-        <tbody>
-          {repos.map(({ repo, branches }) => {
-            const selected = selectedBranches[repo.id] ?? new Set<string>();
-            const branchNames = branches.map((b) => b.name);
-            const repoSelected =
-              branches.length > 0 &&
-              selected.size === branches.length;
+    {/* 🔥 Sticky Delete Bar */}
+    <div className="sticky top-0 z-10 bg-muted border-b border-border p-3 flex justify-end">
+      <button
+        disabled={selectedForDelete.length === 0 || deleting}
+        onClick={() => setShowConfirm(true)}
+        className="bg-red-600 text-white px-4 py-2 rounded disabled:opacity-50"
+      >
+        {deleting
+          ? "Deleting…"
+          : `Delete selected (${selectedForDelete.length})`}
+      </button>
+    </div>
 
-            return (
-              <>
-                {/* ---------------- Repo Row ---------------- */}
-                <tr
-                  key={repo.id}
-                  onClick={() =>
+    {/* 🔥 Table */}
+    <table className="w-full border-collapse">
+      <thead className="bg-muted/30 border-b border-border">
+        <tr className="text-left text-sm text-text/70">
+          <th className="p-3 w-10">Select</th>
+          <th className="p-3 w-10"></th>
+          <th className="p-3">Repository / Branch</th>
+          <th className="p-3 text-right">Last Commit</th>
+        </tr>
+      </thead>
+
+      {repos.map(({ repo, branches }) => {
+        const selected = selectedBranches[repo.id] ?? new Set<string>();
+        const branchNames = branches.map((b) => b.name);
+
+        return (
+          <tbody key={repo.id}>
+            {/* Repo row */}
+            <tr
+              onClick={() => toggleRepo(repo.id, branchNames)}
+              className="border-b cursor-pointer hover:bg-muted/60"
+            >
+              <td className="p-3">
+                <input
+                  type="checkbox"
+                  checked={
+                    branches.length > 0 &&
+                    selected.size === branches.length
+                  }
+                  onChange={() =>
                     toggleRepo(repo.id, branchNames)
                   }
-                  className="bg-background border-b border-border cursor-pointer hover:bg-muted/60"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </td>
+
+              <td className="p-3">
+                <Image src="/folder.svg" alt="" width={20} height={20} />
+              </td>
+
+              <td className="p-3 font-semibold">
+                {repo.name}
+              </td>
+
+              <td />
+            </tr>
+
+            {/* Branch rows */}
+            {branches.map((branch) => {
+              const isSelected = selected.has(branch.name);
+
+              return (
+                <tr
+                  key={`${repo.id}-${branch.name}`}
+                  onClick={() =>
+                    toggleBranch(repo.id, branch.name)
+                  }
+                  className={`border-b cursor-pointer hover:bg-muted/60 ${
+                    isSelected ? "ring-2 ring-primary" : ""
+                  }`}
                 >
                   <td className="p-3">
                     <input
                       type="checkbox"
-                      checked={repoSelected}
+                      checked={isSelected}
+                      disabled={branch.isDefault}
                       onChange={() =>
-                        toggleRepo(repo.id, branchNames)
-                      }
-                      onClick={(e) => e.stopPropagation()}
-                      className="h-4 w-4 rounded border border-border"
-                    />
-                  </td>
-
-                  <td className="p-3">
-                    <Image
-                      src="/folder.svg"
-                      alt="repo"
-                      width={20}
-                      height={20}
-                    />
-                  </td>
-
-                  <td className="p-3 font-semibold">
-                    {repo.name}
-                  </td>
-
-                  <td className="p-3" />
-                </tr>
-
-                {/* ---------------- Branch Rows ---------------- */}
-                {branches.map((branch) => {
-                  const isSelected = selected.has(branch.name);
-
-                  return (
-                    <tr
-                      key={`${repo.id}-${branch.name}`}
-                      onClick={() =>
                         toggleBranch(repo.id, branch.name)
                       }
-                      className={[
-                        "bg-background border-b border-border",
-                        "cursor-pointer hover:bg-muted/60",
-                        isSelected
-                          ? "ring-2 ring-inset ring-primary"
-                          : "",
-                      ].join(" ")}
-                    >
-                      <td className="p-3 ">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          disabled={branch.isDefault}
-                          onChange={() =>
-                            toggleBranch(repo.id, branch.name)
-                          }
-                          onClick={(e) => e.stopPropagation()}
-                          className="h-4 w-4 rounded border border-border"
-                        />
-                      </td>
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </td>
 
-                      <td className="p-3" />  
+                  <td />
 
-                      <td className="p-3 text-sm flex items-center gap-2 justify-start">
-                        <Image
-                          src="/branch.png"
-                          alt="branch"
-                          width={16}
-                          height={16}
-                        />
-                        {branch.name}
-                        {branch.isDefault && (
-                          <span className="text-xs text-muted">
-                            (default)
-                          </span>
-                        )}
-                      </td>
+                  <td className="p-3 text-sm flex gap-2">
+                    <Image
+                      src="/branch.png"
+                      alt=""
+                      width={16}
+                      height={16}
+                    />
+                    {branch.name}
+                    {branch.isDefault && (
+                      <span className="text-xs text-muted">
+                        (default)
+                      </span>
+                    )}
+                  </td>
 
-                      <td className="p-3 text-sm text-right text-muted-foreground">
-                        {new Date(
-                          branch.lastCommitDate
-                        ).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </>
-            );
-          })}
-        </tbody>
-      </table>
+                  <td className="p-3 text-sm text-right text-muted-foreground">
+                    {new Date(
+                      branch.lastCommitDate
+                    ).toLocaleDateString()}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        );
+      })}
+    </table>
+
+    {/* Confirm Modal (unchanged) */}
+    {showConfirm && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg p-6 w-96">
+
+      {/* 🔥 SUCCESS STATE */}
+      {deleteSuccessCount !== null ? (
+        <>
+          <h2 className="text-lg font-semibold text-green-600">
+            ✅ Deleted successfully
+          </h2>
+          <p className="text-sm text-gray-600 mt-2">
+            {deleteSuccessCount} branch(es) were permanently removed.
+          </p>
+        </>
+      ) : (
+        <>
+          <h2 className="text-lg font-semibold text-red-600">
+            Delete {selectedForDelete.length} branch(es)?
+          </h2>
+
+          <p className="text-sm text-gray-600 mt-2">
+            This action is permanent and cannot be undone.
+          </p>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <button
+              onClick={() => setShowConfirm(false)}
+              className="px-3 py-1 border rounded"
+              disabled={deleting}
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={handleDeleteConfirmed}
+              className="px-3 py-1 bg-red-600 text-white rounded"
+              disabled={deleting}
+            >
+              {deleting ? "Deleting…" : "Delete"}
+            </button>
+          </div>
+        </>
+      )}
     </div>
-  );
+  </div>
+)}
+  </div>
+);;
 }
