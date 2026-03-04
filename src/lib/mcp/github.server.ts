@@ -1,14 +1,9 @@
 import { GitHubMcpClient } from "./github.client";
+import { httpMcpTransport } from "./mcp.transport";
 
-
-/**
- * Server-only factory for GitHub MCP client
- */
 export function createGitHubMcpClient(token: string) {
-  return new GitHubMcpClient({
+  return new GitHubMcpClient(
     token,
-    transport: new HttpMcpTransport(
-      process.env.MCP_GITHUB_ENDPOINT!
-    ),
-  });
+    httpMcpTransport
+  );
 }

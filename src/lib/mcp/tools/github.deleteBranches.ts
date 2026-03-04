@@ -7,100 +7,45 @@ export async function deleteBranches(
 ): Promise<DeleteBranchesResult> {
   const octokit = new Octokit({ auth: token });
 
-  const result: DeleteBranchesResult = { deleted: [], skipped: [] };
+  const result: DeleteBranchesResult = {
+    dryRun: input.dryRun,
+    results: [],
+  };
 
   for (const { owner, repo, branch } of input.branches) {
+    // ✅ DRY RUN MODE
     if (input.dryRun) {
-      result.skipped.push({
+      result.results.push({
         owner,
         repo,
         branch,
-        reason: "unknown",
-        error: "dry-run",
+        status: "dry-run",
       });
       continue;
     }
 
     try {
-      // Debug: confirm the ref exists for this token before deleting
-      try {
-        const ref = await octokit.git.getRef({
-          owner,
-          repo,
-          ref: `heads/${branch}`,
-        });
-        console.log("🔎 getRef OK:", {
-          owner,
-          repo,
-          branch,
-          ref: ref.data?.ref,
-          sha: ref.data?.object?.sha,
-        });
-      } catch (getRefErr: any) {
-        console.warn("🔎 getRef FAILED:", {
-          owner,
-          repo,
-          branch,
-          status: getRefErr?.status,
-          message: getRefErr?.message,
-        });
-
-        try {
-          const refs = await octokit.git.listMatchingRefs({
-            owner,
-            repo,
-            ref: "heads",
-          });
-          const names = (refs.data ?? [])
-            .map((r: any) => r.ref)
-            .filter(Boolean);
-          console.warn("🔎 listMatchingRefs(heads) sample:", {
-            owner,
-            repo,
-            total: names.length,
-            containsTarget: names.includes(`refs/heads/${branch}`),
-            sample: names.slice(0, 25),
-          });
-        } catch (listErr: any) {
-          console.warn("🔎 listMatchingRefs FAILED:", {
-            owner,
-            repo,
-            status: listErr?.status,
-            message: listErr?.message,
-          });
-        }
-      }
-
       await octokit.git.deleteRef({
         owner,
         repo,
         ref: `heads/${branch}`,
       });
-      result.deleted.push({ owner, repo, branch });
-    } catch (err: any) {
-      const status = err?.status as number | undefined;
-      const reason =
-        status === 422
-          ? "protected"
-          : status === 404
-            ? "not-found"
-            : status === 403
-              ? "forbidden"
-              : "unknown";
 
-      const message =
-        typeof err?.message === "string" ? err.message : "Unknown error";
-
-      console.error(
-        `❌ deleteBranches failed for ${owner}/${repo}:${branch} (status=${status ?? "n/a"})`,
-        err
-      );
-
-      result.skipped.push({
+      result.results.push({
         owner,
         repo,
         branch,
-        reason,
+        status: "deleted",
+      });
+    } catch (err: any) {
+      const message =
+        typeof err?.message === "string" ? err.message : "Unknown error";
+
+      result.results.push({
+        owner,
+        repo,
+        branch,
+        status: "failed",
         error: message,
       });
     }

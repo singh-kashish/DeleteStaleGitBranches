@@ -1,16 +1,31 @@
-import { auth } from "@/auth";
-import LogoutButton from "../components/LogoutButton";
+"use client";
 
-export default async function Dashboard() {
-  const session = await auth();
+import { useSession, signIn, signOut } from "next-auth/react";
 
-  if (!session) return <div>Not authenticated</div>;
+export default function Page() {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return <p>Loading...</p>;
+  }
+
+  if (!session) {
+    return (
+      <div>
+        <p>You are not signed in</p>
+        <button onClick={() => signIn("github")}>
+          Sign in with GitHub
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8">
+    <div>
       <h1>Welcome {session.user?.name}</h1>
-      <p>GitHub Token stored securely (server-only)</p>
-      <LogoutButton />
+      <button onClick={() => signOut()}>
+        Sign Out
+      </button>
     </div>
   );
 }

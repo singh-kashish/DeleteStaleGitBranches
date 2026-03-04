@@ -28,9 +28,18 @@ export interface Branch {
 /* ---------------- Repo + Branches ---------------- */
 
 export interface RepoWithBranches {
-  owner: string;
-  repo: string;
-  branches: string[];
+  repo: {
+    id: number;
+    name: string;
+    owner: string;
+    defaultBranch: string;
+  };
+  branches: {
+    name: string;
+    lastCommitDate: string;
+    staleDays: number;
+    isDefault: boolean;
+  }[];
 }
 
 export interface DeleteBranchTarget {

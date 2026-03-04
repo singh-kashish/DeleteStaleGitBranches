@@ -57,6 +57,7 @@ export async function listReposWithBranches({
         id: repo.id,
         name: repo.name,
         owner: repo.owner.login,
+        defaultBranch: repo.default_branch,
       },
       branches: enrichedBranches,
     });

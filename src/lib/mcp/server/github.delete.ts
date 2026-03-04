@@ -19,7 +19,7 @@ export async function deleteBranches({
         owner,
         repo,
         branch,
-        status: "DRY_RUN",
+        status: "dry-run",
       });
       continue;
     }
@@ -35,19 +35,18 @@ export async function deleteBranches({
         owner,
         repo,
         branch,
-        status: "DELETED",
+        status: "deleted",
       });
     } catch (err) {
       results.push({
         owner,
         repo,
         branch,
-        status: "FAILED",
+        status: "failed",
         error: err instanceof Error ? err.message : "Unknown error",
       });
     }
   }
 
-  return { results };
+  return { results,dryRun };
 }
-    
