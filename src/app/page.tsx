@@ -9,47 +9,55 @@ import { P } from "./components/utils/utils";
 export default function Page() {
   const { data: session, status } = useSession();
 
-  if (status === "loading") return <p>Loading…</p>;
+  if (status === "loading") {
+    return <p className="p-4 text-muted">Loading…</p>;
+  }
 
   if (!session) {
     return (
       <>
         <Header />
-        <main className="flex flex-col m-4 p-2 dark:bg-[#151B23] border-2 border-solid border-gray-400 rounded-2xl items-center gap-4 min-h-full">
-          <P style="text-xl font-medium" text="Not signed in"/>
-         <button
-          type="button"
-          onClick={() => signIn("github")}
-          className="px-6 py-3 bg-[#151B23] text-white rounded-xl inline-flex items-center justify-center cursor-pointer hover:bg-green-400 transition-colors duration-200 border-2 hover:border-yellow-100"
-        >
-          Sign in with GitHub
-        </button>
+        <main className="flex flex-col items-center gap-4 p-6 bg-background text-text min-h-screen transition-colors">
+          <div className="w-full max-w-xl bg-muted border border-border rounded-xl p-6 text-center">
+            <P text="Not signed in" style="text-xl font-medium" />
+
+            <button
+              onClick={() => signIn("github")}
+              className="mt-4 bg-primary text-white px-6 py-3 rounded-lg hover:opacity-90 transition"
+            >
+              Sign in with GitHub
+            </button>
+          </div>
         </main>
       </>
     );
   }
-  console.log(session.user);
+
   return (
     <>
       <Header />
-      <main className="flex flex-col m-8 p-2 border-2  border-gray-400 rounded-2xl justify-start items-start gap-4 h-full">
-        <div className="bg-[#151B23] w-full text-start rounded-lg flex items-end mb-2 pb-2">
-          {session?.user?.image && (
+      <main className="p-6 bg-background text-text min-h-screen transition-colors">
+        <div className="flex items-center gap-3 mb-6 bg-muted border border-border rounded-lg p-4">
+          {session.user?.image && (
             <Image
               src={session.user.image}
-              width={30}
-              height={30}
-                alt="User profile picture"
-              className="rounded-3xl"
+              width={32}
+              height={32}
+              alt="Profile"
+              className="rounded-full border border-border"
             />
           )}
-          <P text={`Signed in as ${session?.user?.name}`} style="text-xl font-medium ml-2"/>
-          
-            </div>
-        <RepoList/>
+          <P
+            text={`Signed in as ${session.user?.name}`}
+            style="text-lg font-medium"
+          />
+        </div>
+
+        <RepoList />
+
         <button
           onClick={() => signOut()}
-          className="px-6 py-3 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors"
+          className="mt-6 bg-primary text-white px-6 py-3 rounded-lg hover:opacity-90 transition"
         >
           Sign out
         </button>

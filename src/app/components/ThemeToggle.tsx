@@ -12,21 +12,19 @@ export function ThemeToggle() {
   if (!mounted) return null;
 
   return (
-    <div className="flex items-center gap-4 rounded-xl p-4">
-      {/* Light / Dark Toggle */}
+    <div className="flex items-center gap-2">
       <button
         onClick={() => setTheme(theme === "light" ? "dark" : "light")}
         aria-label="Toggle theme"
-        className="rounded-full p-3 hover:bg-green-200 transition cursor-pointer hover:text-black"
+        className="rounded-full p-2 hover:bg-muted transition-colors"
       >
         {theme === "light" ? <Moon /> : <Sun />}
       </button>
 
-      {/* System theme */}
       <button
         onClick={() => setTheme("system")}
         aria-label="Use system theme"
-        className="rounded-full p-3 hover:bg-green-200 transition cursor-pointer hover:text-black"
+        className="rounded-full p-2 hover:bg-muted transition-colors"
       >
         <Laptop />
       </button>

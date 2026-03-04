@@ -1,22 +1,24 @@
-// tailwind.config.ts
 import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
 
-export default {
+const config: Config = {
   darkMode: "class",
   content: [
     "./src/app/**/*.{ts,tsx}",
-    "./src/app/components/**/*.{ts,tsx}",
-    "./src/components/**/*.{ts,tsx}"
+    "./src/components/**/*.{ts,tsx}",
   ],
   theme: {
-    extend: {}
+    extend: {
+      colors: {
+        background: "var(--color-background)",
+        muted: "var(--color-muted)",
+        text: "var(--color-text)",
+        primary: "var(--color-primary)",
+        border: "var(--color-border)",
+      },
+    },
   },
-  plugins: [animate]
-} satisfies Config;
-
-// tailwind.config.js
-module.exports = {
-  darkMode: "class",
-  content: ["./src/**/*.{ts,tsx}"],
+  plugins: [animate],
 };
+
+export default config;
